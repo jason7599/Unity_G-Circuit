@@ -13,7 +13,6 @@ public class MapGenerator : MonoBehaviour
     int[,] Maze = new int[MapSize * 2 + 1, MapSize * 2 + 1];
     List<Tuple<int, int>> Visited = new List<Tuple<int, int>>();
 
-    private static Transform _wallsHolder;
 
     class Room
     {
@@ -119,7 +118,6 @@ public class MapGenerator : MonoBehaviour
         {
             _wallsHolder = new GameObject("Walls").transform;
         }
-
         int mazeLength = MapSize * 2 + 1;
         for (int x = 0; x < mazeLength; x++)
         {
