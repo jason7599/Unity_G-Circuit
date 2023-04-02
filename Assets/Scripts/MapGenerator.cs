@@ -1,19 +1,17 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = System.Random;
 
-public class MapGenerator : MonoBehaviour
+public class MapGenerator
 {
-    public GameObject wallPrefab;
-    
-    const int MapSize = 50;
-    Room[,] Rooms = new Room[MapSize, MapSize];
-    int[,] Maze = new int[MapSize * 2 + 1, MapSize * 2 + 1];
-    List<Tuple<int, int>> Visited = new List<Tuple<int, int>>();
+    static int mapSize;
+    static Room[,] Rooms;
+    static int[,] Maze;
+    static List<Tuple<int, int>> Visited = new List<Tuple<int, int>>();
 
     private static Transform _wallsHolder;
+
 
     class Room
     {
@@ -58,17 +56,17 @@ public class MapGenerator : MonoBehaviour
         }
     }
     
-    int[,] DrawMap()
+    static int[,] DrawMap()
     {
-        for (int x = 0; x < MapSize; x++)
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int y = 0; y < MapSize; y++)
+            for (int y = 0; y < mapSize; y++)
             {
                 Rooms[x, y] = new Room(x, y);
             }
         }
         
-        int mazeLength = MapSize * 2 + 1;
+        int mazeLength = mapSize * 2 + 1;
         for (int x = 0; x < mazeLength; x++)
         {
             for (int y = 0; y < mazeLength; y++)
@@ -82,7 +80,7 @@ public class MapGenerator : MonoBehaviour
         return Maze;
     }
 
-    void MakeRoom(Room currentRoom)
+    static void MakeRoom(Room currentRoom)
     {
         Tuple<int, int> currentPos = currentRoom.GetCurrentPos();
         int currentX = currentPos.Item1;
@@ -97,7 +95,7 @@ public class MapGenerator : MonoBehaviour
             int nextX = nextDir.Item1;
             int nextY = nextDir.Item2;
 
-            if (0 <= nextX && nextX < MapSize && 0 <= nextY && nextY < MapSize)
+            if (0 <= nextX && nextX < mapSize && 0 <= nextY && nextY < mapSize)
             {
                 if (!Visited.Contains(nextDir))
                 {
@@ -108,28 +106,41 @@ public class MapGenerator : MonoBehaviour
         }
     }
     
-    void Awake()
+    public static int[,] InitMap(MazeConfiguration config)
     {
-        GenerateMap(DrawMap());
-    }
+        mapSize = config.mapSize;
+        GameObject wallPrefab = config.wallPrefab;
 
-    void GenerateMap(int[,] maze)
-    {
+        Rooms = new Room[mapSize, mapSize];
+        Maze = new int[mapSize * 2 + 1, mapSize * 2 + 1];
+
+        int[,] map = DrawMap();
+
         if (_wallsHolder == null)
         {
             _wallsHolder = new GameObject("Walls").transform;
         }
 
-        int mazeLength = MapSize * 2 + 1;
+        int mazeLength = mapSize * 2 + 1;
         for (int x = 0; x < mazeLength; x++)
         {
             for (int y = 0; y < mazeLength; y++)
             {
-                if (Maze[x, y] == 1)
+                if (map[x, y] == 1)
                 {
-                    Instantiate(wallPrefab, new Vector3(x*2, 10, y*2), Quaternion.identity, _wallsHolder);
+                    GameObject.Instantiate(wallPrefab, new Vector3(x*2, 10, y*2), Quaternion.identity, _wallsHolder);
                 }
             }
         }
+
+        return map;
     }
+
+}
+
+[System.Serializable]
+public class MazeConfiguration
+{
+    public int mapSize;
+    public GameObject wallPrefab;
 }

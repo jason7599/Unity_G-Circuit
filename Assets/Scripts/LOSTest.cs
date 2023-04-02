@@ -6,48 +6,47 @@ public class LOSTest : MonoBehaviour
 {
     [SerializeField] private Transform _playerTr;
 
-    private void Start()
+    [SerializeField] private float _detectAngle = 50f;
+    [SerializeField] private float _detectDistance = 16f;
+    [SerializeField] private int _visionCheckInterval = 10;
+
+    private int _obstacleLayer = (1 << (int)Layer.Wall);
+
+    private void Update()
     {
-        // StartCoroutine(LookRandom());
+        if (Time.frameCount % _visionCheckInterval == 0)
+        {
+            if (PlayerInSight())
+            {
+                transform.LookAt(_playerTr);
+            }
+        }
     }
 
-    private IEnumerator LookRandom()
+    private bool PlayerInSight()
     {
-        while (true)
-        {
-            Quaternion startRotation = transform.rotation;
-            Quaternion targetRotation = Quaternion.LookRotation(Vector3.right * Random.Range(-1f, 1f) + Vector3.forward * Random.Range(-1f, 1f));
+        Vector3 dirToPlayer = _playerTr.position - transform.position;
 
-            float randomDuration = Random.Range(0.1f, 0.5f);
-            float elapsed = 0f;
-            while (elapsed < randomDuration)
-            {
-                elapsed += Time.deltaTime;
+        if (dirToPlayer.sqrMagnitude > Mathf.Pow(_detectDistance, 2)) return false;
 
-                transform.rotation = Quaternion.Lerp(startRotation, targetRotation, (elapsed / randomDuration));
+        if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle) return false;
 
-                yield return null;
-            }
+        if (Physics.Raycast(transform.position + Vector3.up * 1.5f, dirToPlayer, _detectDistance, _obstacleLayer)) return false;
 
-            yield return new WaitForSeconds(Random.Range(0.5f, 1f));
-        }
+        return true;
     }
 
     private void OnDrawGizmos()
     {
-        Vector3 eyePos = transform.position + Vector3.up * 1.5f;
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, _detectDistance);
 
-        Vector3 dirToPlayer = _playerTr.position - eyePos; dirToPlayer.y = 0;
+        if (PlayerInSight())
+        {
+            Vector3 dirToPlayer = _playerTr.position - transform.position;
 
-        float angleOffset = Vector3.Angle(transform.forward, dirToPlayer);
-        Handles.Label(eyePos, $"Angle: {angleOffset}");
-
-        // if (angleOffset <= 50f)
-        // {
-        //     if (Physics.Raycast(eyePos, dirToPlayer, out RaycastHit hit, 10f, (1 << 6)))
-        //     {
-
-        //     }
-        // }
+            Gizmos.color = Color.green;
+            Gizmos.DrawRay(transform.position + Vector3.up * 1.5f, dirToPlayer);
+        }
     }
 }
