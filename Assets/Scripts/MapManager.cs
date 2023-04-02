@@ -9,7 +9,5 @@ public class MapManager : MonoBehaviour
     private void Awake()
     {
         _maze = MapGenerator.InitMap(_mazeConfig);
-
-        // main?
     }
 }

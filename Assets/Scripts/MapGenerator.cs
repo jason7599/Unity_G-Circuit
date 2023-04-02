@@ -6,12 +6,15 @@ using Random = System.Random;
 public class MapGenerator
 {
     static int mapSize;
+    private static int wallSize;
+    private static int wallHeight;
+    private static int baseSize = 3;
+    
     static Room[,] Rooms;
     static int[,] Maze;
     static List<Tuple<int, int>> Visited = new List<Tuple<int, int>>();
 
     private static Transform _wallsHolder;
-
 
     class Room
     {
@@ -58,6 +61,7 @@ public class MapGenerator
     
     static int[,] DrawMap()
     {
+        // Initialize Maze
         for (int x = 0; x < mapSize; x++)
         {
             for (int y = 0; y < mapSize; y++)
@@ -65,7 +69,6 @@ public class MapGenerator
                 Rooms[x, y] = new Room(x, y);
             }
         }
-        
         int mazeLength = mapSize * 2 + 1;
         for (int x = 0; x < mazeLength; x++)
         {
@@ -75,7 +78,37 @@ public class MapGenerator
             }
         }
         
+        // Start Making Map
         MakeRoom(Rooms[0, 0]);
+        
+        // Generate Shortcuts
+        Random ran = new Random();
+        int holeNum = mapSize * 2;
+        int mapLength = mazeLength - 1;
+        while (true)
+        {
+            if (holeNum == 0)
+            {
+                break;
+            }
+
+            int x = ran.Next(1, mapLength);
+            int y = ran.Next(1, mapLength);
+            if ((Maze[y - 1, x] + Maze[y + 1, x] == 2 && Maze[y, x - 1] + Maze[y, x + 1] == 0) || (Maze[y - 1, x] + Maze[y + 1, x] == 0 && Maze[y, x - 1] + Maze[y, x + 1] == 2))
+            {
+                Maze[y, x] = 0;
+                holeNum--;
+            }
+        }
+        
+        // Generate Base
+        for (int x = mapSize - baseSize; x <= mapSize + baseSize; x++)
+        {
+            for (int y = mapSize - baseSize; y <= mapSize + baseSize; y++)
+            {
+                Maze[y, x] = 0;
+            }
+        }
         
         return Maze;
     }
@@ -109,6 +142,8 @@ public class MapGenerator
     public static int[,] InitMap(MazeConfiguration config)
     {
         mapSize = config.mapSize;
+        wallSize = config.wallSize;
+        wallHeight = config.wallHeight;
         GameObject wallPrefab = config.wallPrefab;
 
         Rooms = new Room[mapSize, mapSize];
@@ -128,7 +163,7 @@ public class MapGenerator
             {
                 if (map[x, y] == 1)
                 {
-                    GameObject.Instantiate(wallPrefab, new Vector3(x*2, 10, y*2), Quaternion.identity, _wallsHolder);
+                    GameObject.Instantiate(wallPrefab, new Vector3(x*wallSize, wallHeight / 2, y*wallSize), Quaternion.identity, _wallsHolder);
                 }
             }
         }
@@ -142,5 +177,7 @@ public class MapGenerator
 public class MazeConfiguration
 {
     public int mapSize;
+    public int wallSize;
+    public int wallHeight;
     public GameObject wallPrefab;
 }
