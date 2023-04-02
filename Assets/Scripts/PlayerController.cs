@@ -3,15 +3,11 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     private Rigidbody _body;
-
     [SerializeField] private float _speed = 5f;
 
-    [SerializeField] private float _runSpeed = 10f;
-
+    private float _camPitch = 0f;
     [SerializeField] private Transform _camHolder;
     [SerializeField] private float _mouseSensitivity = 1f;
-
-    private float _camPitch = 0f;
 
     private void Start()
     {
@@ -21,7 +17,7 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = false;
     }
 
-    private void LateUpdate() // look
+    private void Update() // look
     {
         float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity; // horizontal look, rotate entire body along the y axis
         float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity; // vertical look, rotate only the cameraHolder along the x axis

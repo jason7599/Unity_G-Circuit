@@ -7,7 +7,7 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetKeyDown(KeyCode.F))
         {
             _flash.Toggle();
         }
