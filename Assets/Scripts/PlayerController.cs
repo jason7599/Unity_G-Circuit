@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _runSpeed = 8f;
     private Rigidbody _body;
 
+    public Rigidbody Body { get { return _body; } }
+
 
     [Header("View")]
     [SerializeField] private Transform _camHolder;
@@ -36,7 +38,7 @@ public class PlayerController : MonoBehaviour
     [Header("Temp SHIT")]
     [SerializeField] private Text _staminaText;
 
-    private void SetStaminaText() { _staminaText.text = $"Stamina: {_stamina:0..}"; }
+    private void SetStaminaText() { _staminaText.text = $"Stamina: {_stamina:.00}"; }
 
 
     private void Start()
@@ -65,8 +67,8 @@ public class PlayerController : MonoBehaviour
             _flash.HAX(); // TEMP
         }
 
-        float mouseX = Input.GetAxis("Mouse X"); // horizontal look, rotate entire body along the y axis
-        float mouseY = Input.GetAxis("Mouse Y"); // vertical look, rotate only the cameraHolder along the x axis
+        float mouseX = Input.GetAxisRaw("Mouse X"); // horizontal look, rotate entire body along the y axis
+        float mouseY = Input.GetAxisRaw("Mouse Y"); // vertical look, rotate only the cameraHolder along the x axis
 
         transform.Rotate(Vector3.up * mouseX * _mouseSensitivity);
 
@@ -99,7 +101,7 @@ public class PlayerController : MonoBehaviour
                 speed = _walkSpeed;
             }
 
-            _lastRunTime = Time.time; // Have to completely let go of shift for stamina recharge
+            _lastRunTime = Time.time; // Have to completely let go of shift (if moving) for stamina recharge
         }
         else 
         {
@@ -115,10 +117,18 @@ public class PlayerController : MonoBehaviour
         SetStaminaText();
 
         if (!standstill)
-        {
+        {   
             Vector3 moveVec = 
                 (transform.forward * moveZ + transform.right * moveX).normalized * Time.fixedDeltaTime * speed;
             _body.MovePosition(_body.position + moveVec);
         }
+    }
+
+
+    public void Die()
+    {
+        _body.useGravity = true;
+        _body.constraints = RigidbodyConstraints.None;
+        enabled = false;
     }
 }

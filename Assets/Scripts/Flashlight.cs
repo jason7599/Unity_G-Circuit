@@ -56,6 +56,32 @@ public class Flashlight : MonoBehaviour
 
         _batteryDrainRoutine = StartCoroutine(BatteryDegrade());
     }
+    
+
+    private int _beamCollideLayer = (1 << (int)Layer.Wall) | (1 << (int)Layer.Enemy);
+
+    private void Update() // TODO: maybe move this into battery degrade routine?
+    {
+        if (!_isOn) return;
+
+        // Debug.DrawRay()
+
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, 10f, _beamCollideLayer, QueryTriggerInteraction.Collide))
+        {
+            GameObject hitObject = hit.collider.gameObject;
+
+            if (hitObject.layer == (int)Layer.Wall)
+            {
+                return;
+            }
+            
+            if (hitObject.TryGetComponent(out GhostTest gt))
+            {
+                gt.Hurt();
+            }
+        }
+    }
+
 
     private void ToggleOff()
     {
