@@ -22,6 +22,13 @@ public class Flashlight : MonoBehaviour
         _batteryLeftText.text = $"Battery Left: {_batteryLeft:.00}";
     }
 
+    // TEMP
+    public void HAX()
+    {
+        _batteryLeft = 100f;
+        SetBatteryText();
+    }
+
     private void Start()
     {
         _initialLightIntensity = _light.intensity;

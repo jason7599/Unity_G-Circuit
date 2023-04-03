@@ -3,35 +3,41 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
-    #region Movement
-    private Rigidbody _body;
+    [Header("Movement")]
     [SerializeField] private float _walkSpeed = 5f;
     [SerializeField] private float _runSpeed = 8f;
-    #endregion
+    private Rigidbody _body;
 
 
-    #region Look
-    private float _camPitch = 0f;
+    [Header("View")]
     [SerializeField] private Transform _camHolder;
     [SerializeField] private float _mouseSensitivity = 1f;
-    #endregion
+    private float _camPitch = 0f;
 
 
+    [Header("Flashlight")]
     [SerializeField] private Flashlight _flash;
+    private Transform _flashTr;
 
 
-    #region Stamina
-    private float _stamina = 100f;
+    [Header("Flashlight Sway")]
+    [SerializeField] private float _swayMultiplier = 2f;
+    [SerializeField] private float _swaySmooth = 8f;
+
+
+    [Header("Stamina")]
     [SerializeField] private float _staminaDrainRate = 0.5f;
     [SerializeField] private float _staminRechargeRate = 0.5f;
     [SerializeField] private float _staminaRechargeDelay = 1.5f; // how many seconds of not running it takes for stamina to recharge
+    private float _stamina = 100f;
     private float _lastRunTime; // last point in time where player ran.
-    #endregion
 
 
-    // TEMP
+    [Header("Temp SHIT")]
     [SerializeField] private Text _staminaText;
+
     private void SetStaminaText() { _staminaText.text = $"Stamina: {_stamina:0..}"; }
+
 
     private void Start()
     {
@@ -42,52 +48,77 @@ public class PlayerController : MonoBehaviour
 
         _lastRunTime = Time.time;
 
+        _flashTr = _flash.transform;
+
         SetStaminaText();
     }
 
-    private void Update() // look
+    private void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
             _flash.Toggle();
         }
-    
-        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity; // horizontal look, rotate entire body along the y axis
-        float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity; // vertical look, rotate only the cameraHolder along the x axis
 
-        transform.Rotate(Vector3.up * mouseX);
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            _flash.HAX(); // TEMP
+        }
 
-        _camPitch = Mathf.Clamp(_camPitch - mouseY, -90f, 90f);
+        float mouseX = Input.GetAxis("Mouse X"); // horizontal look, rotate entire body along the y axis
+        float mouseY = Input.GetAxis("Mouse Y"); // vertical look, rotate only the cameraHolder along the x axis
+
+        transform.Rotate(Vector3.up * mouseX * _mouseSensitivity);
+
+        _camPitch = Mathf.Clamp(_camPitch - mouseY * _mouseSensitivity, -90f, 90f);
         _camHolder.localEulerAngles = Vector3.right * _camPitch; 
+
+
+        // Flashlight Sway
+        Quaternion swayRotation = Quaternion.AngleAxis(mouseX * _swayMultiplier, Vector3.up) * Quaternion.AngleAxis(-mouseY * _swayMultiplier, Vector3.right);
+        _flashTr.localRotation = Quaternion.Slerp(_flashTr.localRotation, swayRotation, _swaySmooth * Time.deltaTime); 
     }
 
     private void FixedUpdate() // move
     {
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveZ = Input.GetAxisRaw("Vertical");
         float speed;
 
-        if (Input.GetKey(KeyCode.LeftShift) && _stamina > 0f)
-        {
-            _stamina -= _staminaDrainRate;
-            speed = _runSpeed;
+        bool standstill = moveX == 0f && moveZ == 0f;
 
-            _lastRunTime = Time.time;
+        if (Input.GetKey(KeyCode.LeftShift) && !standstill) 
+        {
+            if (_stamina > 0f)
+            {
+                speed = _runSpeed;
+                _stamina -= _staminaDrainRate;
+            }
+            else
+            {
+                speed = _walkSpeed;
+            }
+
+            _lastRunTime = Time.time; // Have to completely let go of shift for stamina recharge
         }
-        else
+        else 
         {
             if (_stamina < 100f && Time.time >= _lastRunTime + _staminaRechargeDelay)
             {
                 _stamina += _staminRechargeRate;
             }
+
             speed = _walkSpeed;
         }
 
         _stamina = Mathf.Clamp(_stamina, 0f, 100f);
         SetStaminaText();
 
-        Vector3 moveVec = 
-            (transform.forward * Input.GetAxisRaw("Vertical") + transform.right * Input.GetAxisRaw("Horizontal"))
-            .normalized * Time.fixedDeltaTime * speed;
-        
-        _body.MovePosition(_body.position + moveVec);
+        if (!standstill)
+        {
+            Vector3 moveVec = 
+                (transform.forward * moveZ + transform.right * moveX).normalized * Time.fixedDeltaTime * speed;
+            _body.MovePosition(_body.position + moveVec);
+        }
     }
 }
