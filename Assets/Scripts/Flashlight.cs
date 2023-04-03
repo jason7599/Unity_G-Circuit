@@ -9,11 +9,11 @@ public class Flashlight : MonoBehaviour
     [SerializeField] private Text _batteryLeftText;
 
     [SerializeField] private Light _light;
-    [SerializeField] private float _batteryDegradeRate = 0.25f;
+    [SerializeField] private float _batteryDrainRate = 0.25f;
 
     private float _batteryLeft = 100f;
     private float _initialLightIntensity;
-    private Coroutine _batteryDegradeRoutine;
+    private Coroutine _batteryDrainRoutine;
     private bool _isOn;
 
     // TEMP
@@ -47,7 +47,7 @@ public class Flashlight : MonoBehaviour
         _light.enabled = true;
         _isOn = true;
 
-        _batteryDegradeRoutine = StartCoroutine(BatteryDegrade());
+        _batteryDrainRoutine = StartCoroutine(BatteryDegrade());
     }
 
     private void ToggleOff()
@@ -55,7 +55,7 @@ public class Flashlight : MonoBehaviour
         _light.enabled = false;
         _isOn = false;
 
-        StopCoroutine(_batteryDegradeRoutine);
+        StopCoroutine(_batteryDrainRoutine);
     }
 
     private IEnumerator BatteryDegrade()
@@ -67,7 +67,7 @@ public class Flashlight : MonoBehaviour
 
             _light.intensity = _initialLightIntensity * interpolation + noise;
 
-            _batteryLeft -= _batteryDegradeRate;
+            _batteryLeft -= _batteryDrainRate;
 
             SetBatteryText();
 
