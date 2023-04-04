@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class GhostTest : MonoBehaviour
 {
-    [SerializeField] private PlayerController _player;
+    private PlayerController _player;
+    
     [SerializeField] private float _speed = 8f;
     [SerializeField] private float _attackRangeSqrd = 4f;
 
@@ -30,7 +31,7 @@ public class GhostTest : MonoBehaviour
 
     public void Hurt()
     {
-        // print("Ow");
+        print("Ow");
 
         _health -= 1f;
         if (_health <= 0f)

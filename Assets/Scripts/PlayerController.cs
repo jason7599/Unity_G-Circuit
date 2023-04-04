@@ -64,7 +64,7 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            _flash.HAX(); // TEMP
+            _flash.ChargeBattery(20f);
         }
 
         float mouseX = Input.GetAxisRaw("Mouse X"); // horizontal look, rotate entire body along the y axis
