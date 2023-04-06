@@ -5,5 +5,5 @@ public enum Layer
     Player = 6,
     Wall = 7,
     Enemy = 8,
-    Pickup = 9,
+    Battery = 9,
 }

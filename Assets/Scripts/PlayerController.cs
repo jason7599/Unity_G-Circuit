@@ -1,13 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Player))]
 public class PlayerController : MonoBehaviour
 {
+    private Player _player;
+
     [Header("Movement")]
     [SerializeField] private float _walkSpeed = 5f;
     [SerializeField] private float _runSpeed = 8f;
+    [SerializeField] private float _jumpForce = 20f; 
     private Rigidbody _body;
-
     public Rigidbody Body { get { return _body; } }
 
 
@@ -38,11 +41,13 @@ public class PlayerController : MonoBehaviour
     [Header("Temp SHIT")]
     [SerializeField] private Text _staminaText;
 
+
     private void SetStaminaText() { _staminaText.text = $"Stamina: {_stamina:.00}"; }
 
 
     private void Start()
     {
+        _player = GetComponent<Player>();
         _body = GetComponent<Rigidbody>();
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -57,7 +62,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetKeyDown(KeyCode.F))
         {
             _flash.Toggle();
         }
@@ -65,6 +70,17 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R))
         {
             _flash.ChargeBattery(20f);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (_stamina > 5f)
+            {
+                _body.AddForce(Vector3.up * _jumpForce);
+                _stamina -= 5f;
+                _lastRunTime = Time.time;
+                SetStaminaText();
+            }
         }
 
         float mouseX = Input.GetAxisRaw("Mouse X"); // horizontal look, rotate entire body along the y axis
@@ -121,6 +137,17 @@ public class PlayerController : MonoBehaviour
             Vector3 moveVec = 
                 (transform.forward * moveZ + transform.right * moveX).normalized * Time.fixedDeltaTime * speed;
             _body.MovePosition(_body.position + moveVec);
+        }
+    }
+
+
+    private void OnTriggerEnter(Collider collider)
+    {
+        GameObject go = collider.gameObject;
+        if (go.layer == (int)Layer.Battery)
+        {
+            _flash.ChargeBattery(20f);
+            Destroy(go);
         }
     }
 

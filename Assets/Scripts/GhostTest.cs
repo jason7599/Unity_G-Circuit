@@ -7,7 +7,7 @@ public class GhostTest : MonoBehaviour
     [SerializeField] private float _speed = 8f;
     [SerializeField] private float _attackRangeSqrd = 4f;
 
-    private float _health = 100f;
+    private int _health = 100;
 
     private void Start()
     {
@@ -32,9 +32,7 @@ public class GhostTest : MonoBehaviour
     public void Hurt()
     {
         print("Ow");
-
-        _health -= 1f;
-        if (_health <= 0f)
+        if (--_health <= 0f)
         {
             Flee();
         }
@@ -42,7 +40,7 @@ public class GhostTest : MonoBehaviour
 
     private void Flee()
     {
-        _health = 100f;
+        _health = 100;
         _speed += 2f;
         
         Vector3 randomPos = Random.onUnitSphere;
