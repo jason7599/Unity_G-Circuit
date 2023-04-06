@@ -5,57 +5,56 @@ using Random = System.Random;
 
 public class MapGenerator
 {
-    static int mapSize;
+    [Header("MapConfig")]
+    private static int mapSize;
     private static int wallSize;
     private static int wallHeight;
     private static int baseSize = 3;
     
-    static Room[,] Rooms;
-    static int[,] Maze;
-    static List<Tuple<int, int>> Visited = new List<Tuple<int, int>>();
-
-    private static Transform _wallsHolder;
+    [Header("Maze")]
+    private static int[,] maze;
+    
+    [Header("Others")]
+    private static Room[,] rooms;
+    private static List<Tuple<int, int>> visited = new List<Tuple<int, int>>();
+    private static Transform wallsHolder;
 
     class Room
     {
-        int x;
-        int y;
-        Tuple<int, int> myDir;
-        List<Tuple<int, int>> dir = new List<Tuple<int, int>>();
-        public Queue<Tuple<int, int>> randomizedDir = new Queue<Tuple<int, int>>();
-        Random _random = new Random();
+        public Queue<Tuple<int, int>> RandomizedDir = new Queue<Tuple<int, int>>();
+        private Tuple<int, int> _myDir;
+        private List<Tuple<int, int>> _dir = new List<Tuple<int, int>>();
+        private Random _random = new Random();
         
         public Room(int x, int y)
         {
-            this.x = x;
-            this.y = y;
-            myDir = new Tuple<int, int>(x, y);
+            _myDir = new Tuple<int, int>(x, y);
             
-            dir.Add(new Tuple<int, int>(x-1, y));
-            dir.Add(new Tuple<int, int>(x+1, y));
-            dir.Add(new Tuple<int, int>(x, y-1));
-            dir.Add(new Tuple<int, int>(x, y+1));
+            _dir.Add(new Tuple<int, int>(x-1, y));
+            _dir.Add(new Tuple<int, int>(x+1, y));
+            _dir.Add(new Tuple<int, int>(x, y-1));
+            _dir.Add(new Tuple<int, int>(x, y+1));
 
             for (int idx = 4; idx > 0; idx--)
             {
-                Tuple<int, int> chooseDir = dir[_random.Next(0, idx)];
-                dir.Remove(chooseDir);
-                randomizedDir.Enqueue(chooseDir);
+                Tuple<int, int> chooseDir = _dir[_random.Next(0, idx)];
+                _dir.Remove(chooseDir);
+                RandomizedDir.Enqueue(chooseDir);
             }
         }
 
         public Tuple<int, int> GetCurrentPos()
         {
-            return myDir;
+            return _myDir;
         }
 
         public Tuple<int, int> GetNextPos()
         {
-            if (randomizedDir.Count == 0)
+            if (RandomizedDir.Count == 0)
             {
                 return null;
             }
-            return randomizedDir.Dequeue();
+            return RandomizedDir.Dequeue();
         }
     }
     
@@ -66,7 +65,7 @@ public class MapGenerator
         {
             for (int y = 0; y < mapSize; y++)
             {
-                Rooms[x, y] = new Room(x, y);
+                rooms[x, y] = new Room(x, y);
             }
         }
         int mazeLength = mapSize * 2 + 1;
@@ -74,12 +73,12 @@ public class MapGenerator
         {
             for (int y = 0; y < mazeLength; y++)
             {
-                Maze[x, y] = 1;
+                maze[x, y] = 1;
             }
         }
         
         // Start Making Map
-        MakeRoom(Rooms[0, 0]);
+        MakeRoom(rooms[0, 0]);
         
         // Generate Shortcuts
         Random ran = new Random();
@@ -94,9 +93,9 @@ public class MapGenerator
 
             int x = ran.Next(1, mapLength);
             int y = ran.Next(1, mapLength);
-            if ((Maze[y - 1, x] + Maze[y + 1, x] == 2 && Maze[y, x - 1] + Maze[y, x + 1] == 0) || (Maze[y - 1, x] + Maze[y + 1, x] == 0 && Maze[y, x - 1] + Maze[y, x + 1] == 2))
+            if ((maze[y - 1, x] + maze[y + 1, x] == 2 && maze[y, x - 1] + maze[y, x + 1] == 0) || (maze[y - 1, x] + maze[y + 1, x] == 0 && maze[y, x - 1] + maze[y, x + 1] == 2))
             {
-                Maze[y, x] = 0;
+                maze[y, x] = 0;
                 holeNum--;
             }
         }
@@ -106,11 +105,11 @@ public class MapGenerator
         {
             for (int y = mapSize - baseSize; y <= mapSize + baseSize; y++)
             {
-                Maze[y, x] = 0;
+                maze[y, x] = 0;
             }
         }
         
-        return Maze;
+        return maze;
     }
 
     static void MakeRoom(Room currentRoom)
@@ -119,10 +118,10 @@ public class MapGenerator
         int currentX = currentPos.Item1;
         int currentY = currentPos.Item2;
         
-        Visited.Add(new Tuple<int, int>(currentX, currentY));
-        Maze[currentX * 2 + 1, currentY * 2 + 1] = 0;
+        visited.Add(new Tuple<int, int>(currentX, currentY));
+        maze[currentX * 2 + 1, currentY * 2 + 1] = 0;
         
-        while (currentRoom.randomizedDir.Count != 0)
+        while (currentRoom.RandomizedDir.Count != 0)
         {
             Tuple<int, int> nextDir = currentRoom.GetNextPos();
             int nextX = nextDir.Item1;
@@ -130,10 +129,10 @@ public class MapGenerator
 
             if (0 <= nextX && nextX < mapSize && 0 <= nextY && nextY < mapSize)
             {
-                if (!Visited.Contains(nextDir))
+                if (!visited.Contains(nextDir))
                 {
-                    Maze[currentX + nextX + 1, currentY + nextY + 1] = 0;
-                    MakeRoom(Rooms[nextX, nextY]);
+                    maze[currentX + nextX + 1, currentY + nextY + 1] = 0;
+                    MakeRoom(rooms[nextX, nextY]);
                 }
             }
         }
@@ -144,18 +143,21 @@ public class MapGenerator
         mapSize = config.mapSize;
         wallSize = config.wallSize;
         wallHeight = config.wallHeight;
+        baseSize = config.baseSize;
         GameObject wallPrefab = config.wallPrefab;
 
-        Rooms = new Room[mapSize, mapSize];
-        Maze = new int[mapSize * 2 + 1, mapSize * 2 + 1];
+        rooms = new Room[mapSize, mapSize];
+        maze = new int[mapSize * 2 + 1, mapSize * 2 + 1];
 
         int[,] map = DrawMap();
+        Random _random = new Random();
 
-        if (_wallsHolder == null)
+        if (wallsHolder == null)
         {
-            _wallsHolder = new GameObject("Walls").transform;
+            wallsHolder = new GameObject("Walls").transform;
         }
 
+        // Generate Wall Prefabs
         int mazeLength = mapSize * 2 + 1;
         for (int x = 0; x < mazeLength; x++)
         {
@@ -163,9 +165,51 @@ public class MapGenerator
             {
                 if (map[x, y] == 1)
                 {
-                    GameObject.Instantiate(wallPrefab, new Vector3(x*wallSize, wallHeight / 2, y*wallSize), Quaternion.identity, _wallsHolder);
+                    GameObject.Instantiate(wallPrefab, new Vector3(x*wallSize, wallHeight / 2, y*wallSize), Quaternion.identity, wallsHolder);
                 }
             }
+        }
+        
+        // Generate Exit
+        
+        
+        // Spawn Items
+        
+        
+        // Spawn Monsters
+        List<GameObject> spawnedMonster = new List<GameObject>();
+        GameObject[] monsterList = config.monsterPrefab;
+        int monsterNum = 3;
+        int setSpawnLengthInterval = 3;
+        int spawnLengthInterval = setSpawnLengthInterval * 2 + 1;
+
+        List<Tuple<int, int>> spawnLocations = new List<Tuple<int, int>>();
+        spawnLocations.Add(new Tuple<int, int>(spawnLengthInterval, spawnLengthInterval));
+        spawnLocations.Add(new Tuple<int, int>(spawnLengthInterval, mazeLength - 1 - spawnLengthInterval));
+        spawnLocations.Add(new Tuple<int, int>(mazeLength - 1 - spawnLengthInterval, spawnLengthInterval));
+        spawnLocations.Add(new Tuple<int, int>(mazeLength - 1 - spawnLengthInterval, mazeLength - 1 - spawnLengthInterval));
+        Queue<Tuple<int, int>> randomizedLocation = new Queue<Tuple<int, int>>();
+        for (int idx = 4; idx > 0; idx--)
+        {
+            Tuple<int, int> chooseLocation = spawnLocations[_random.Next(0, idx)];
+            spawnLocations.Remove(chooseLocation);
+            randomizedLocation.Enqueue(chooseLocation);
+        }
+        
+        for (int i = 0; i < monsterNum; i++)
+        {
+            GameObject monster = monsterList[_random.Next(monsterList.Length)];
+            if (spawnedMonster.Contains(monster))
+            {
+                i--;
+                continue;
+            }
+            spawnedMonster.Add(monster);
+            
+            Tuple<int, int> spawnLocation = randomizedLocation.Dequeue();
+            int spawnX = spawnLocation.Item1 * wallSize;
+            int spawnY = spawnLocation.Item2 * wallSize;
+            GameObject.Instantiate(monster, new Vector3(spawnX, 1, spawnY), Quaternion.identity);
         }
 
         return map;
@@ -179,5 +223,7 @@ public class MazeConfiguration
     public int mapSize;
     public int wallSize;
     public int wallHeight;
+    public int baseSize;
     public GameObject wallPrefab;
+    public GameObject[] monsterPrefab;
 }
