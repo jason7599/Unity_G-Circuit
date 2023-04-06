@@ -99,7 +99,7 @@ public class Flashlight : MonoBehaviour
                     // TEMP
                     if (hitObject.TryGetComponent(out GhostTest gt))
                     {
-                        gt.Hurt();
+                        // gt.Hurt();
                     }
                 }
             }
