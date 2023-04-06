@@ -1,8 +1,11 @@
 using UnityEngine;
-using UnityEngine.UI;
+
+using UnityEngine.UI; // TEMP
 
 public class PlayerMovement : MonoBehaviour
 {
+    #region Fields
+
     [Header("General")]
     [SerializeField] private float _walkSpeed = 4f;
     [SerializeField] private float _runSpeed = 8f;
@@ -23,6 +26,11 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 _moveVec;
     private float _stamina = 100f;
     private float _nextStaminaRecharge; // Have to surpass this time for stamina to recharge
+    private bool _isAirborne;
+    private bool _isConstrained;
+
+    #endregion
+    #region Monobehaviour Methods
 
     private void Start()
     {
@@ -64,8 +72,9 @@ public class PlayerMovement : MonoBehaviour
         _moveVec = (transform.forward * moveZ + transform.right * moveX).normalized * speed;
 
         // TODO: Ground checking
-        if (Input.GetKeyDown(KeyCode.Space) && _stamina >= _jumpStaminaCost)
+        if (Input.GetKeyDown(KeyCode.Space) && !_isAirborne && _stamina >= _jumpStaminaCost)
         {
+            _isAirborne = true;
             _body.AddForce(Vector3.up * _jumpForce);
             _stamina -= _jumpStaminaCost;
             _nextStaminaRecharge = Time.time + _staminaRechargeDelay;
@@ -78,4 +87,22 @@ public class PlayerMovement : MonoBehaviour
     {
         _body.MovePosition(_body.position + _moveVec * Time.fixedDeltaTime);
     }
+
+    
+    private void OnCollisionEnter(Collision collision)
+    {
+        GameObject go = collision.gameObject;
+        if (go.layer == (int)Layer.Floor)
+        {
+            _isAirborne = false;
+        }
+    }
+
+
+    #endregion
+    #region My Methods
+
+    
+
+    #endregion
 }
