@@ -6,15 +6,37 @@ using System.Collections;
 [RequireComponent(typeof(PlayerLook))]
 public class Player : MonoBehaviour
 {
-    private static Player _instance;
-    public static Player Instance { get { return _instance; } }
+    #region Singleton Fields
 
-    [SerializeField] private Flashlight _flash;
+    private static Player _instance;
+    public static Player Instance 
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // This will only happen if another script tries to access
+                // the instance before this script's awake is called
+                _instance = FindObjectOfType<Player>();
+                _instance._move = _instance.GetComponent<PlayerMovement>();
+                _instance._look = _instance.GetComponent<PlayerLook>();
+            }
+
+            return _instance;
+        }
+    }
 
     private PlayerMovement _move;
     private PlayerLook _look;
 
-    private Coroutine _bindRoutine;
+    public static PlayerMovement Movement { get { return Instance._move; } }
+    public static PlayerLook Look { get { return Instance._look; } }
+
+    #endregion
+
+
+    [SerializeField] private Flashlight _flash;
+
 
     private int _health = 100;
 
@@ -24,21 +46,28 @@ public class Player : MonoBehaviour
 
     private void Awake()
     {
-        _instance = this;
+        if (_instance == null)
+        {
+            _instance = this;
+
+            _move = GetComponent<PlayerMovement>();
+            _look = GetComponent<PlayerLook>();
+        }
+        else if (_instance != this)
+        {
+            Debug.LogError("Multiple player instances detected.");
+            Destroy(gameObject);
+            return;
+        }
     }
 
-    private void Start()
-    {
-        _move = GetComponent<PlayerMovement>();
-        _look = GetComponent<PlayerLook>();
-    }
 
     private void Update()
     {
         HandleInput();
     }
 
-    // Hanlde inputs regarding item and stuff
+    // Hanlde inputs regarding items and stuff
     private void HandleInput()
     {
         if (Input.GetKeyDown(KeyCode.F))
@@ -49,6 +78,10 @@ public class Player : MonoBehaviour
         {
             _flash.ChargeBattery(20f);
         }
+        // if (Input.GetKeyDown(KeyCode.Q))
+        // {
+        //     Stun(5f);
+        // }
     }
 
     public void TakeDamage(int damage)
@@ -72,38 +105,33 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void Bind(float duration, Vector3? constrainPos = null, float smoothMoveTime = 0f)
+    // TODO:
+    // public void TakeDamage(Damage damage)
+    // {
+
+    // }
+
+    public void Stun(float duration)
     {
-        if (_bindRoutine != null) StopCoroutine(_bindRoutine);
-        _bindRoutine = StartCoroutine(BindRoutine(duration, constrainPos, smoothMoveTime));
+        StartCoroutine(StunRoutine(duration));
     }
 
-    private IEnumerator BindRoutine(float duration, Vector3? constrainPos = null, float smoothMoveTime = 0f)
+    private IEnumerator StunRoutine(float duration)
     {
-        _move.enabled = false;
+        Vector3 pos = transform.position;
+        Quaternion rot = transform.rotation;
+        RigidbodyConstraints constraints = _move.body.constraints;
 
-        if (constrainPos != null)
-        {
-            Vector3 startPos = transform.position;
-            Vector3 destPos = (Vector3)constrainPos;
+        _move.body.constraints = RigidbodyConstraints.None;
+        _move.body.AddForce(Random.onUnitSphere * 100f);
+        _look.enabled = false;
 
-            smoothMoveTime = Mathf.Min(duration, smoothMoveTime);
-            float elapsed = 0f;
-
-            while (elapsed < smoothMoveTime)
-            {
-                elapsed += Time.deltaTime;
-                transform.position = Vector3.Lerp(startPos, destPos, (elapsed / smoothMoveTime));
-
-                yield return null;
-            }
-
-            duration -= smoothMoveTime;
-            transform.position = destPos;
-        }
-        
+        _move.Bind(duration);
         yield return new WaitForSeconds(duration);
 
-        _move.enabled = true;
+        _look.enabled = true;
+        _move.body.constraints = constraints;
+        transform.rotation = rot;
+        transform.position = pos;
     }
 }

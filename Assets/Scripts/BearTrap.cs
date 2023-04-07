@@ -18,7 +18,7 @@ public class BearTrap : PlayerDetect
     {
         Player.Instance.TakeDamage(_trapDamage);
         Player.Instance.Bleed(1, 10, 2f);
-        Player.Instance.Bind(_trapDuration, transform.position + Vector3.up * 0.125f, 0.075f);
+        Player.Movement.Bind(_trapDuration, transform.position, 0.075f);
 
         StartCoroutine(ActivateRoutine());
     }

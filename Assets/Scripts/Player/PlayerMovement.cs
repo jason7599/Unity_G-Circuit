@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 using UnityEngine.UI; // TEMP
 
@@ -22,27 +23,43 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateText() => staminaText.text = $"Stamina: {_stamina:.00}";
 
-    private Rigidbody _body;
+    public Rigidbody body { get; private set; }
     private Vector3 _moveVec;
     private float _stamina = 100f;
     private float _nextStaminaRecharge; // Have to surpass this time for stamina to recharge
-    private bool _isAirborne;
-    private bool _isConstrained;
+    private bool _canMove = true;
+    private Coroutine _bindRoutine; // to prevent overlapping binds
+
 
     #endregion
     #region Monobehaviour Methods
 
     private void Start()
     {
-        _body = GetComponent<Rigidbody>();
+        body = GetComponent<Rigidbody>();
     }
 
     private void Update()
     {
+        if (!_canMove)
+        {
+            _moveVec = Vector3.zero;
+
+            if (_stamina < 100f && Time.time >= _nextStaminaRecharge)
+            {
+                _stamina += _staminaRechargeRate * Time.deltaTime;
+            }
+
+            _stamina = Mathf.Clamp(_stamina, 0f, 100f);
+
+            return;
+        }
+
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveZ = Input.GetAxisRaw("Vertical");
         float speed;
 
+        // If shift held down and non zero movement 
         if (Input.GetKey(KeyCode.LeftShift) && (moveX != 0f || moveZ != 0f))
         {
             if (_stamina > 0f)
@@ -69,40 +86,90 @@ public class PlayerMovement : MonoBehaviour
         }
 
         _stamina = Mathf.Clamp(_stamina, 0f, 100f);
+
+
         _moveVec = (transform.forward * moveZ + transform.right * moveX).normalized * speed;
 
         // TODO: Ground checking
-        if (Input.GetKeyDown(KeyCode.Space) && !_isAirborne && _stamina >= _jumpStaminaCost)
+        if (Input.GetKeyDown(KeyCode.Space) && _stamina >= _jumpStaminaCost)
         {
-            _isAirborne = true;
-            _body.AddForce(Vector3.up * _jumpForce);
+            body.AddForce(Vector3.up * _jumpForce);
             _stamina -= _jumpStaminaCost;
             _nextStaminaRecharge = Time.time + _staminaRechargeDelay;
         }
+
 
         UpdateText();
     }
 
     private void FixedUpdate()
     {
-        _body.MovePosition(_body.position + _moveVec * Time.fixedDeltaTime);
-    }
-
-    
-    private void OnCollisionEnter(Collision collision)
-    {
-        GameObject go = collision.gameObject;
-        if (go.layer == (int)Layer.Floor)
-        {
-            _isAirborne = false;
-        }
+        body.MovePosition(body.position + _moveVec * Time.fixedDeltaTime);
     }
 
 
     #endregion
     #region My Methods
 
-    
+
+    // constrainPos:    Where the player should be bound to
+    // smoothMoveTime:  How many seconds to move to constrainPos
+    public void Bind(float duration, Vector3? constrainPos = null, float smoothMoveTime = 0f)
+    {
+        if (_bindRoutine != null) StopCoroutine(_bindRoutine);
+        _bindRoutine = StartCoroutine(BindRoutine(duration, constrainPos, smoothMoveTime));
+    }
+
+    private IEnumerator BindRoutine(float duration, Vector3? constrainPos = null, float smoothMoveTime = 0f)
+    {
+        _canMove = false;
+
+        if (constrainPos != null)
+        {
+            Vector3 startPos = body.position;
+            Vector3 destPos = (Vector3)constrainPos;
+
+            smoothMoveTime = Mathf.Min(duration, smoothMoveTime);
+            float elapsed = 0f;
+
+            while (elapsed < smoothMoveTime)
+            {
+                elapsed += Time.deltaTime;
+                body.position = Vector3.Lerp(startPos, destPos, (elapsed / smoothMoveTime));
+
+                yield return null;
+            }
+
+            duration -= smoothMoveTime;
+            body.position = destPos;
+        }
+        
+        yield return new WaitForSeconds(duration);
+
+        _canMove = true;
+    }
+
+
+    // public void Stun(float duration)
+    // {
+    //     StartCoroutine(StunRoutine(duration));
+    // }
+
+    // private IEnumerator StunRoutine(float duration)
+    // {
+    //     Vector3 pos = body.position;
+    //     Quaternion rot = body.rotation;
+    //     RigidbodyConstraints constraints = body.constraints;
+
+    //     body.constraints = RigidbodyConstraints.None;
+
+    //     Bind(duration);
+    //     yield return new WaitForSeconds(duration);
+
+    //     body.position = pos;
+    //     body.rotation = rot;
+    //     body.constraints = constraints;
+    // }
 
     #endregion
 }
