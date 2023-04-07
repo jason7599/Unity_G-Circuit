@@ -7,7 +7,7 @@ public class SceneManagerEx : MonoBehaviour
 {
     public void SceneChangeToGame()
     {
-        SceneManager.LoadScene("GameScene");
+        SceneManager.LoadScene("RanccatScene");
     }
 
     public void SceneChangeToMenu()

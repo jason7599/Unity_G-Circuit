@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = System.Random;
 
 public class MapGenerator
@@ -10,21 +11,32 @@ public class MapGenerator
     private static int wallSize;
     private static int wallHeight;
     private static int baseSize = 3;
+    private static int holeNum = 120;
+    private static int batteryNum = 10;
     
     [Header("Maze")]
     private static int[,] maze;
+    ////// Index //////
+    // 0 for path    //
+    // 1 for wall    //
+    // 2 for exit    //
+    // 3 for monster //
+    // 4 for battery //
+    // 5 for item    //
+    ///////////////////
     
     [Header("Others")]
     private static Room[,] rooms;
     private static List<Tuple<int, int>> visited = new List<Tuple<int, int>>();
     private static Transform wallsHolder;
+    private static Transform batteryHolder;
+    private static Random random = new Random();
 
     class Room
     {
         public Queue<Tuple<int, int>> RandomizedDir = new Queue<Tuple<int, int>>();
         private Tuple<int, int> _myDir;
         private List<Tuple<int, int>> _dir = new List<Tuple<int, int>>();
-        private Random _random = new Random();
         
         public Room(int x, int y)
         {
@@ -37,7 +49,7 @@ public class MapGenerator
 
             for (int idx = 4; idx > 0; idx--)
             {
-                Tuple<int, int> chooseDir = _dir[_random.Next(0, idx)];
+                Tuple<int, int> chooseDir = _dir[random.Next(0, idx)];
                 _dir.Remove(chooseDir);
                 RandomizedDir.Enqueue(chooseDir);
             }
@@ -60,7 +72,7 @@ public class MapGenerator
     
     static int[,] DrawMap()
     {
-        // Initialize Maze
+        #region InitializeMaze
         for (int x = 0; x < mapSize; x++)
         {
             for (int y = 0; y < mapSize; y++)
@@ -76,13 +88,11 @@ public class MapGenerator
                 maze[x, y] = 1;
             }
         }
+        #endregion
         
-        // Start Making Map
         MakeRoom(rooms[0, 0]);
-        
-        // Generate Shortcuts
-        Random ran = new Random();
-        int holeNum = mapSize * 2;
+
+        #region Draw Shortcuts
         int mapLength = mazeLength - 1;
         while (true)
         {
@@ -91,16 +101,27 @@ public class MapGenerator
                 break;
             }
 
-            int x = ran.Next(1, mapLength);
-            int y = ran.Next(1, mapLength);
+            int x = random.Next(1, mapLength);
+            int y = random.Next(1, mapLength);
             if ((maze[y - 1, x] + maze[y + 1, x] == 2 && maze[y, x - 1] + maze[y, x + 1] == 0) || (maze[y - 1, x] + maze[y + 1, x] == 0 && maze[y, x - 1] + maze[y, x + 1] == 2))
             {
                 maze[y, x] = 0;
                 holeNum--;
             }
         }
-        
-        // Generate Base
+        #endregion
+
+        #region DrawExit
+        List<Tuple<int, int>> randomExitLocations = new List<Tuple<int, int>>();
+        randomExitLocations.Add(new Tuple<int, int>(mapSize, 0));
+        randomExitLocations.Add(new Tuple<int, int>(0, mapSize));
+        randomExitLocations.Add(new Tuple<int, int>(mapSize * 2, mapSize));
+        randomExitLocations.Add(new Tuple<int, int>(mapSize, mapSize * 2));
+        Tuple<int, int> exitLocation = randomExitLocations[random.Next(4)];
+        maze[exitLocation.Item2, exitLocation.Item1] = 2;
+        #endregion
+
+        #region DrawBase
         for (int x = mapSize - baseSize; x <= mapSize + baseSize; x++)
         {
             for (int y = mapSize - baseSize; y <= mapSize + baseSize; y++)
@@ -108,6 +129,17 @@ public class MapGenerator
                 maze[y, x] = 0;
             }
         }
+        #endregion
+
+        #region DrawBattery
+        int[] allLocationY = {5, 9, 13, 17, 21, 39, 43, 47, 51, 55};
+        for (int listIdx = 0; listIdx < 10; listIdx++)
+        {
+            int y = allLocationY[listIdx];
+            int x = random.Next(mapSize) * 2 + 1;
+            maze[y, x] = 4;
+        }
+        #endregion
         
         return maze;
     }
@@ -145,19 +177,25 @@ public class MapGenerator
         wallHeight = config.wallHeight;
         baseSize = config.baseSize;
         GameObject wallPrefab = config.wallPrefab;
+        GameObject batteryPrefab = config.batteryPrefab;
+        GameObject[] monsterList = config.monsterPrefab;
 
         rooms = new Room[mapSize, mapSize];
         maze = new int[mapSize * 2 + 1, mapSize * 2 + 1];
 
         int[,] map = DrawMap();
-        Random _random = new Random();
 
         if (wallsHolder == null)
         {
             wallsHolder = new GameObject("Walls").transform;
         }
 
-        // Generate Wall Prefabs
+        if (batteryHolder == null)
+        {
+            batteryHolder = new GameObject("Batteries").transform;
+        }
+
+        // Generate Wall and Battery
         int mazeLength = mapSize * 2 + 1;
         for (int x = 0; x < mazeLength; x++)
         {
@@ -167,22 +205,23 @@ public class MapGenerator
                 {
                     GameObject.Instantiate(wallPrefab, new Vector3(x*wallSize, wallHeight / 2, y*wallSize), Quaternion.identity, wallsHolder);
                 }
+
+                if (map[x, y] == 4)
+                {
+                    GameObject.Instantiate(batteryPrefab, new Vector3(x * wallSize, 1, y * wallSize),
+                        Quaternion.identity, batteryHolder);
+                }
             }
         }
-        
-        // Generate Exit
-        
-        
-        // Spawn Items
-        
-        
-        // Spawn Monsters
+
+        #region SpawnMonsters
+        // Configs
         List<GameObject> spawnedMonster = new List<GameObject>();
-        GameObject[] monsterList = config.monsterPrefab;
         int monsterNum = 3;
         int setSpawnLengthInterval = 3;
         int spawnLengthInterval = setSpawnLengthInterval * 2 + 1;
 
+        // Randomizing
         List<Tuple<int, int>> spawnLocations = new List<Tuple<int, int>>();
         spawnLocations.Add(new Tuple<int, int>(spawnLengthInterval, spawnLengthInterval));
         spawnLocations.Add(new Tuple<int, int>(spawnLengthInterval, mazeLength - 1 - spawnLengthInterval));
@@ -191,27 +230,28 @@ public class MapGenerator
         Queue<Tuple<int, int>> randomizedLocation = new Queue<Tuple<int, int>>();
         for (int idx = 4; idx > 0; idx--)
         {
-            Tuple<int, int> chooseLocation = spawnLocations[_random.Next(0, idx)];
+            Tuple<int, int> chooseLocation = spawnLocations[random.Next(0, idx)];
             spawnLocations.Remove(chooseLocation);
             randomizedLocation.Enqueue(chooseLocation);
         }
-        
+        // Spawning
         for (int i = 0; i < monsterNum; i++)
         {
-            GameObject monster = monsterList[_random.Next(monsterList.Length)];
+            GameObject monster = monsterList[random.Next(monsterList.Length)];
             if (spawnedMonster.Contains(monster))
             {
                 i--;
                 continue;
             }
             spawnedMonster.Add(monster);
-            
             Tuple<int, int> spawnLocation = randomizedLocation.Dequeue();
+            maze[spawnLocation.Item2, spawnLocation.Item1] = 3;
             int spawnX = spawnLocation.Item1 * wallSize;
             int spawnY = spawnLocation.Item2 * wallSize;
             GameObject.Instantiate(monster, new Vector3(spawnX, 1, spawnY), Quaternion.identity);
         }
-
+        #endregion
+        
         return map;
     }
 
@@ -226,4 +266,5 @@ public class MazeConfiguration
     public int baseSize;
     public GameObject wallPrefab;
     public GameObject[] monsterPrefab;
+    public GameObject batteryPrefab;
 }
