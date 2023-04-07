@@ -1,20 +1,64 @@
 using UnityEngine;
 
-public abstract class PlayerDetect : MonoBehaviour
-{
-    private Collider _collider;
+public class PlayerDetect : MonoBehaviour
+{   
+    [Header("Detection Options")]
+    [SerializeField] private float _detectDistance = 4f;
+    [SerializeField] private float _detectAngle = 60f;
+    [SerializeField] private int _detectInterval = 10;
+    [SerializeField] private LayerMask _obstructionlayer;
+    private float _detectDistanceSquared;
 
-    protected virtual void Awake()
+    public delegate void DetectEvent();
+
+    private DetectEvent OnPlayerDetectEnter;
+    private DetectEvent OnPlayerDetectExit;
+    public bool detected { get; private set; }
+
+    private void Start()
     {
-        _collider = GetComponent<Collider>();
+        _detectDistanceSquared = Mathf.Pow(_detectDistance, 2);
     }
 
-    private void OnTriggerEnter(Collider collider)
+    public void Configure(DetectEvent enter, DetectEvent exit)
     {
-        _collider.enabled = false;
-
-        OnDetect();
+        OnPlayerDetectEnter = enter;
+        OnPlayerDetectExit = exit;
     }
 
-    protected abstract void OnDetect();
+    private void Update()
+    {
+        if (Time.frameCount % _detectInterval == 0)
+        {
+            if (PlayerInSight())
+            {
+                if (!detected)
+                {
+                    detected = true;
+                    OnPlayerDetectEnter?.Invoke();
+                }
+            }
+            else
+            {
+                if (detected)
+                {
+                    detected = false;
+                    OnPlayerDetectExit?.Invoke();
+                }
+            }
+        }
+    }
+
+    public bool PlayerInSight()
+    {
+        Vector3 dirToPlayer = Player.Instance.transform.position - transform.position;
+
+        if (dirToPlayer.sqrMagnitude > _detectDistanceSquared) return false;
+
+        if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle) return false;
+
+        if (Physics.Raycast(transform.position + transform.up, dirToPlayer, _detectDistance, _obstructionlayer)) return false;
+
+        return true;
+    }
 }

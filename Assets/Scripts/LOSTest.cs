@@ -1,52 +1,81 @@
 using UnityEngine;
-using UnityEditor;
 using System.Collections;
 
+[RequireComponent(typeof(PlayerDetect))]
 public class LOSTest : MonoBehaviour
 {
-    [SerializeField] private Transform _playerTr;
-
-    [SerializeField] private float _detectAngle = 50f;
-    [SerializeField] private float _detectDistance = 16f;
-    [SerializeField] private int _visionCheckInterval = 10;
-
-    private int _obstacleLayer = (1 << (int)Layer.Wall);
+    [SerializeField] private float _speed = 1f;
+    
+    private enum EnemyState { Idle, Alert, Chase }
+    private Coroutine _alertRoutine;
+    private EnemyState _state = EnemyState.Idle;
+    private Vector3 _lastSeenPos;
+    
+    private void Start()
+    {
+        GetComponent<PlayerDetect>().Configure(OnPlayerDetect, OnPlayerLost);
+    }
 
     private void Update()
     {
-        if (Time.frameCount % _visionCheckInterval == 0)
+        switch (_state)
         {
-            if (PlayerInSight())
+            case EnemyState.Idle:
+
+                break;
+
+            case EnemyState.Alert:
+
+
+
+                break;
+
+            case EnemyState.Chase:
+
+                Vector3 dirToMove = Player.Instance.transform.position - transform.position;
+
+                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(dirToMove), .5f);
+                transform.position += dirToMove.normalized * Time.deltaTime * _speed;
+
+                break;
+        }
+    }
+
+    private void OnPlayerDetect()
+    {
+        if (_alertRoutine != null)
+            StopCoroutine(_alertRoutine);
+
+        _state = EnemyState.Chase;
+        _lastSeenPos = Player.Instance.transform.position;
+    }
+
+    private void OnPlayerLost()
+    {
+        _state = EnemyState.Alert;
+    }
+
+    private IEnumerator AlertRoutine(float duration)
+    {
+        while (duration > 0f)
+        {
+            Quaternion startRot = transform.rotation;
+            Quaternion destRot = Quaternion.LookRotation(new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)));
+
+            float randomDuration = Mathf.Min(Random.Range(.25f, .5f), duration);
+            float elapsed = 0f;
+
+            while (elapsed < randomDuration)
             {
-                transform.LookAt(_playerTr);
+                transform.rotation = Quaternion.Slerp(startRot, destRot, (elapsed / randomDuration));
+                elapsed += Time.deltaTime;
+
+                yield return null;
             }
+
+            duration -= randomDuration;
         }
-    }
 
-    private bool PlayerInSight()
-    {
-        Vector3 dirToPlayer = _playerTr.position - transform.position;
-
-        if (dirToPlayer.sqrMagnitude > Mathf.Pow(_detectDistance, 2)) return false;
-
-        if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle) return false;
-
-        if (Physics.Raycast(transform.position + Vector3.up * 1.5f, dirToPlayer, _detectDistance, _obstacleLayer)) return false;
-
-        return true;
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, _detectDistance);
-
-        if (PlayerInSight())
-        {
-            Vector3 dirToPlayer = _playerTr.position - transform.position;
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawRay(transform.position + Vector3.up * 1.5f, dirToPlayer);
-        }
+        _state = EnemyState.Idle;
     }
 }

@@ -34,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
     #endregion
     #region Monobehaviour Methods
 
+
     private void Start()
     {
         body = GetComponent<Rigidbody>();
@@ -149,27 +150,6 @@ public class PlayerMovement : MonoBehaviour
         _canMove = true;
     }
 
-
-    // public void Stun(float duration)
-    // {
-    //     StartCoroutine(StunRoutine(duration));
-    // }
-
-    // private IEnumerator StunRoutine(float duration)
-    // {
-    //     Vector3 pos = body.position;
-    //     Quaternion rot = body.rotation;
-    //     RigidbodyConstraints constraints = body.constraints;
-
-    //     body.constraints = RigidbodyConstraints.None;
-
-    //     Bind(duration);
-    //     yield return new WaitForSeconds(duration);
-
-    //     body.position = pos;
-    //     body.rotation = rot;
-    //     body.constraints = constraints;
-    // }
 
     #endregion
 }
