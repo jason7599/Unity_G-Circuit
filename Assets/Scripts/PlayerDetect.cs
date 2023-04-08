@@ -4,8 +4,8 @@ public class PlayerDetect : MonoBehaviour
 {   
     [Header("Detection Options")]
     [SerializeField] private float _detectDistance = 4f;
-    [SerializeField] private float _detectAngle = 60f;
-    [SerializeField] private int _detectInterval = 10;
+    [SerializeField] private float _detectAngle = 60f; 
+    [SerializeField] private int _detectInterval = 10; // Interval in frames to check detection
     [SerializeField] private LayerMask _obstructionlayer;
     private float _detectDistanceSquared;
 
@@ -17,10 +17,11 @@ public class PlayerDetect : MonoBehaviour
 
     private void Start()
     {
-        _detectDistanceSquared = Mathf.Pow(_detectDistance, 2);
+        _detectDistanceSquared = Mathf.Pow(_detectDistance, 2); // in hopes of basic optimization
     }
 
-    public void Configure(DetectEvent enter, DetectEvent exit)
+    // Register callback methods
+    public void Register(DetectEvent enter, DetectEvent exit)
     {
         OnPlayerDetectEnter = enter;
         OnPlayerDetectExit = exit;
@@ -28,22 +29,22 @@ public class PlayerDetect : MonoBehaviour
 
     private void Update()
     {
-        if (Time.frameCount % _detectInterval == 0)
+        if (Time.frameCount % _detectInterval == 0) 
         {
             if (PlayerInSight())
             {
-                if (!detected)
+                if (!detected) // detect enter
                 {
-                    detected = true;
                     OnPlayerDetectEnter?.Invoke();
+                    detected = true;
                 }
             }
             else
             {
-                if (detected)
+                if (detected) // detect exit
                 {
-                    detected = false;
                     OnPlayerDetectExit?.Invoke();
+                    detected = false;
                 }
             }
         }
@@ -51,12 +52,13 @@ public class PlayerDetect : MonoBehaviour
 
     public bool PlayerInSight()
     {
-        Vector3 dirToPlayer = Player.Instance.transform.position - transform.position;
+        Vector3 dirToPlayer = Player.Position - transform.position;
 
         if (dirToPlayer.sqrMagnitude > _detectDistanceSquared) return false;
 
         if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle) return false;
 
+        // TODO: more rays
         if (Physics.Raycast(transform.position + transform.up, dirToPlayer, _detectDistance, _obstructionlayer)) return false;
 
         return true;

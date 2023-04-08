@@ -6,7 +6,7 @@ using System.Collections;
 [RequireComponent(typeof(PlayerLook))]
 public class Player : MonoBehaviour
 {
-    #region Singleton Fields
+    #region Singleton Stuff
 
     private static Player _instance;
     public static Player Instance 
@@ -18,8 +18,14 @@ public class Player : MonoBehaviour
                 // This will only happen if another script tries to access
                 // the instance before this script's awake is called
                 _instance = FindObjectOfType<Player>();
-                _instance._move = _instance.GetComponent<PlayerMovement>();
-                _instance._look = _instance.GetComponent<PlayerLook>();
+
+                if (_instance == null)
+                {
+                    Debug.LogError("Player instance missing!");
+                    return null;
+                }
+
+                InitFields();
             }
 
             return _instance;
@@ -31,6 +37,16 @@ public class Player : MonoBehaviour
 
     public static PlayerMovement Movement { get { return Instance._move; } }
     public static PlayerLook Look { get { return Instance._look; } }
+
+    public static Transform Transform { get { return Instance.transform; } }
+    public static Vector3 Position { get { return Transform.position; } set { Transform.position = value; } }
+
+
+    private static void InitFields()
+    {
+        _instance._move = _instance.GetComponent<PlayerMovement>();
+        _instance._look = _instance.GetComponent<PlayerLook>();
+    }
 
     #endregion
 
@@ -44,14 +60,13 @@ public class Player : MonoBehaviour
     [SerializeField] private Text _healthText;
     void SetHealthText() => _healthText.text = $"Health: {_health}";
 
+
     private void Awake()
     {
         if (_instance == null)
         {
             _instance = this;
-
-            _move = GetComponent<PlayerMovement>();
-            _look = GetComponent<PlayerLook>();
+            InitFields();
         }
         else if (_instance != this)
         {
@@ -60,6 +75,7 @@ public class Player : MonoBehaviour
             return;
         }
     }
+
 
     private void Update()
     {

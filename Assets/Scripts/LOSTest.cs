@@ -7,53 +7,53 @@ public class LOSTest : MonoBehaviour
     [SerializeField] private float _speed = 1f;
     
     private enum EnemyState { Idle, Alert, Chase }
-    private Coroutine _alertRoutine;
     private EnemyState _state = EnemyState.Idle;
-    private Vector3 _lastSeenPos;
+    private Vector3 _destPos;
+
+    private Coroutine _alertRoutine;
     
     private void Start()
     {
-        GetComponent<PlayerDetect>().Configure(OnPlayerDetect, OnPlayerLost);
+        GetComponent<PlayerDetect>().Register(OnPlayerDetect, OnPlayerLost);
     }
 
     private void Update()
     {
         switch (_state)
         {
-            case EnemyState.Idle:
+            // move to random pos
+            // case EnemyState.Idle:
+            //     break;
 
-                break;
-
+            // move to player's last seen pos
+            // and look around randomly
             case EnemyState.Alert:
 
-
-
                 break;
 
+            // move to player
             case EnemyState.Chase:
-
-                Vector3 dirToMove = Player.Instance.transform.position - transform.position;
-
-                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(dirToMove), .5f);
-                transform.position += dirToMove.normalized * Time.deltaTime * _speed;
-
+                _destPos = Player.Position;
                 break;
         }
     }
 
+
+    // transition to Chase
     private void OnPlayerDetect()
     {
         if (_alertRoutine != null)
             StopCoroutine(_alertRoutine);
 
         _state = EnemyState.Chase;
-        _lastSeenPos = Player.Instance.transform.position;
     }
+
 
     private void OnPlayerLost()
     {
         _state = EnemyState.Alert;
     }
+
 
     private IEnumerator AlertRoutine(float duration)
     {

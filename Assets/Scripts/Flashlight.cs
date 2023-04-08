@@ -73,7 +73,6 @@ public class Flashlight : MonoBehaviour
     {
         while (_batteryLeft > 0f)
         {
-
             if (_batteryLeft > 100f)
             {
                 _light.intensity = _initialLightIntensity;
@@ -86,7 +85,7 @@ public class Flashlight : MonoBehaviour
                 _light.intensity = _initialLightIntensity * interpolation + noise;
             }
 
-            _batteryLeft -= _batteryDrainRate;
+            _batteryLeft -= _batteryDrainRate * Time.deltaTime;
             SetBatteryText();
 
 
@@ -110,7 +109,6 @@ public class Flashlight : MonoBehaviour
 
         _batteryLeft = 0f;
         SetBatteryText();
-
         ToggleOff();
     }
 }
