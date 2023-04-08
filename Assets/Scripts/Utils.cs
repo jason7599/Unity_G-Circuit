@@ -7,3 +7,4 @@ public enum Layer
     PlayerTrigger = 9,
     Floor = 10,
 }
+
