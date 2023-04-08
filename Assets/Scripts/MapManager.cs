@@ -1,16 +1,21 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class MapManager : MonoBehaviour
 {
     private int[,] _maze;
 
     [SerializeField] private MazeConfiguration _mazeConfig;
-    [SerializeField] private Player _player;
+    [SerializeField] private NavMeshSurface _surface;
 
     private void Awake()
     {
         _maze = MapGenerator.InitMap(_mazeConfig);
-        Vector3 playerPos = new Vector3(_mazeConfig.mapSize * _mazeConfig.wallSize, 0, _mazeConfig.mapSize * _mazeConfig.wallSize);
-        _player.transform.position = playerPos;
+        _surface.BuildNavMesh();
+    }
+
+    private void Start()
+    {
+        Player.Position = (Vector3.forward + Vector3.right) * _mazeConfig.mapSize * _mazeConfig.wallSize;
     }
 }
