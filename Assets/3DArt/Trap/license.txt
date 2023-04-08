@@ -1,0 +1,11 @@
+Model Information:
+* title:	Neighbor bearTrap
+* source:	https://sketchfab.com/3d-models/neighbor-beartrap-c6a8089b4fda4d26b59cd36b23e90094
+* author:	Harlie/Kaeul (https://sketchfab.com/harleymh)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Neighbor bearTrap" (https://sketchfab.com/3d-models/neighbor-beartrap-c6a8089b4fda4d26b59cd36b23e90094) by Harlie/Kaeul (https://sketchfab.com/harleymh) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
