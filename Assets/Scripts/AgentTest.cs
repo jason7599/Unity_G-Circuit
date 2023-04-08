@@ -13,7 +13,6 @@ public class AgentTest : MonoBehaviour
 
     private void Update()
     {
-        if (Time.frameCount % 10 == 0)
         _agent.SetDestination(destTr.position);
     }
 }
