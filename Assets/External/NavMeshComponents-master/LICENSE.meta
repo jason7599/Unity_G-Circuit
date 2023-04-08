@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/External/NavMeshComponents-master/LICENSE.meta
 guid: 5f403a5e488568f4cba97892180650e4
+========
+guid: ba2e60f7ef7334d47a3a98167f5ed788
+>>>>>>>> ranccat:Assets/Scenes/ClearScene.unity.meta
 DefaultImporter:
   externalObjects: {}
   userData: 
