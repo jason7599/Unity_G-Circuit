@@ -4,9 +4,11 @@ public class PlayerDetect : MonoBehaviour
 {   
     [Header("Detection Options")]
     [SerializeField] private float _detectDistance = 4f;
-    [SerializeField] private float _detectAngle = 60f; 
+    [Range(0, 360)]
+    [SerializeField] private float _detectAngle = 120f; 
     [SerializeField] private int _detectInterval = 10; // Interval in frames to check detection
-    [SerializeField] private LayerMask _obstructionlayer;
+    
+    private int _obstructionlayer = (1 << (int)Layer.Wall);
     private float _detectDistanceSquared;
 
     public delegate void DetectEvent();
@@ -56,7 +58,7 @@ public class PlayerDetect : MonoBehaviour
 
         if (dirToPlayer.sqrMagnitude > _detectDistanceSquared) return false;
 
-        if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle) return false;
+        if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle / 2) return false;
 
         // TODO: more rays
         if (Physics.Raycast(transform.position + transform.up, dirToPlayer, _detectDistance, _obstructionlayer)) return false;
