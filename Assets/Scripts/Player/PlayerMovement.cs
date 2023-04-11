@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-
 using UnityEngine.UI; // TEMP
 
 public class PlayerMovement : MonoBehaviour
@@ -21,8 +20,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("TEMP SHIT")]
     public Text staminaText;
 
-    void UpdateText() => staminaText.text = $"Stamina: {_stamina:.00}";
-
+    void UpdateText() 
+    {
+        staminaText.text = $"Stamina: {_stamina:.00}";
+    }
     public Rigidbody body { get; private set; }
     private Vector3 _moveVec;
     private float _stamina = 100f;
@@ -33,7 +34,6 @@ public class PlayerMovement : MonoBehaviour
 
     #endregion
     #region Monobehaviour Methods
-
 
     private void Start()
     {

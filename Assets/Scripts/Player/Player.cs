@@ -58,6 +58,7 @@ public class Player : MonoBehaviour
 
     // TEMP SHIT
     [SerializeField] private Text _healthText;
+    
     void SetHealthText() => _healthText.text = $"Health: {_health}";
 
 
