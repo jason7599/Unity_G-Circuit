@@ -61,7 +61,7 @@ public class PlayerDetect : MonoBehaviour
         if (Vector3.Angle(transform.forward, dirToPlayer) > _detectAngle / 2) return false;
 
         // TODO: more rays
-        if (Physics.Raycast(transform.position + transform.up, dirToPlayer, _detectDistance, _obstructionlayer)) return false;
+        if (Physics.Raycast(transform.position + transform.up * .25f, dirToPlayer, _detectDistance, _obstructionlayer)) return false;
 
         return true;
     }
